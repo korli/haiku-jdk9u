@@ -1006,6 +1006,8 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_$1_OS" = xbsd; then
     $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
+  elif test "x$OPENJDK_$1_OS" = xhaiku; then
+    $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK -DHAIKU"
   elif test "x$OPENJDK_$1_OS" = xwindows; then
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -D_WINDOWS -DWIN32 -D_JNI_IMPLEMENTATION_"
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -nologo -W3 -MD -MP"
@@ -1204,6 +1206,18 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
           AC_MSG_ERROR([Unrecognized \$DEBUG_LEVEL: $DEBUG_LEVEL])
           ;;
         esac
+    fi
+    if test "x$OPENJDK_$1_OS" = xhaiku; then
+      # And since we now know that the linker is gnu, then add -z defs, to forbid
+      # undefined symbols in object files.
+      LDFLAGS_NO_UNDEF_SYM="-Wl,-z,defs"
+      $2LDFLAGS_JDK="${$2LDFLAGS_JDK} $LDFLAGS_NO_UNDEF_SYM"
+      $2JVM_LDFLAGS="[$]$2JVM_LDFLAGS  $LDFLAGS_NO_UNDEF_SYM"
+      LDFLAGS_NO_EXEC_STACK="-Wl,-z,noexecstack"
+      $2JVM_LDFLAGS="[$]$2JVM_LDFLAGS $LDFLAGS_NO_EXEC_STACK"
+      if test "x$OPENJDK_$1_CPU" = xx86; then
+        $2JVM_LDFLAGS="[$]$2JVM_LDFLAGS -march=i586"
+      fi
     fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"

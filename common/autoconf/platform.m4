@@ -136,6 +136,10 @@ AC_DEFUN([PLATFORM_EXTRACT_VARS_FROM_OS],
       VAR_OS=aix
       VAR_OS_TYPE=unix
       ;;
+    *haiku*)
+      VAR_OS=haiku
+      VAR_OS_TYPE=unix
+      ;;
     *)
       AC_MSG_ERROR([unsupported operating system $1])
       ;;
@@ -336,6 +340,8 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
 
   if test "x$OPENJDK_$1_OS" = xmacosx; then
       OPENJDK_$1_OS_EXPORT_DIR=macosx
+  elif test "x$OPENJDK_$1_OS" = xhaiku; then
+      OPENJDK_$1_OS_EXPORT_DIR=haiku
   else
       OPENJDK_$1_OS_EXPORT_DIR=${OPENJDK_$1_OS_TYPE}
   fi
