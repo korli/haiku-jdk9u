@@ -1008,6 +1008,7 @@ AC_DEFUN([FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER],
     $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
   elif test "x$OPENJDK_$1_OS" = xhaiku; then
     $2COMMON_CCXXFLAGS_JDK="[$]$2COMMON_CCXXFLAGS_JDK -DHAIKU"
+    $2JVM_CFLAGS="[$]$2JVM_CFLAGS -DHAIKU"
   elif test "x$OPENJDK_$1_OS" = xwindows; then
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -D_WINDOWS -DWIN32 -D_JNI_IMPLEMENTATION_"
     $2JVM_CFLAGS="[$]$2JVM_CFLAGS -nologo -W3 -MD -MP"
@@ -1309,6 +1310,8 @@ $2LDFLAGS_JDKLIB="${$2LDFLAGS_JDKLIB} ${$2JAVA_BASE_LDFLAGS}"
     $2JVM_LIBS="[$]$2JVM_LIBS -Wl,-lC_r -lm -ldl -lpthread"
   elif test "x$OPENJDK_$1_OS" = xbsd; then
     $2JVM_LIBS="[$]$2JVM_LIBS -lm"
+  elif test "x$OPENJDK_$1_OS" = xhaiku; then
+    $2JVM_LIBS="[$]$2JVM_LIBS -lnetwork"
   elif test "x$OPENJDK_$1_OS" = xwindows; then
     $2JVM_LIBS="[$]$2JVM_LIBS kernel32.lib user32.lib gdi32.lib winspool.lib \
         comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \

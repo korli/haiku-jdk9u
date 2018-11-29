@@ -676,7 +676,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_DETECT_TOOLCHAIN_EXTRA],
 
   # objcopy is used for moving debug symbols to separate files when
   # full debug symbols are enabled.
-  if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux; then
+  if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xhaiku; then
     BASIC_CHECK_TOOLS(OBJCOPY, [gobjcopy objcopy])
     # Only call fixup if objcopy was found.
     if test -n "$OBJCOPY"; then

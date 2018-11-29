@@ -5001,6 +5001,7 @@ VALID_TOOLCHAINS_solaris="solstudio"
 VALID_TOOLCHAINS_macosx="gcc clang"
 VALID_TOOLCHAINS_aix="xlc"
 VALID_TOOLCHAINS_windows="microsoft"
+VALID_TOOLCHAINS_haiku="gcc clang"
 
 # Toolchain descriptions
 TOOLCHAIN_DESCRIPTION_clang="clang/LLVM"
@@ -5190,7 +5191,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1512412485
+DATE_WHEN_GENERATED=1543526840
 
 ###############################################################################
 #
@@ -15738,6 +15739,10 @@ test -n "$target_alias" &&
       VAR_OS=aix
       VAR_OS_TYPE=unix
       ;;
+    *haiku*)
+      VAR_OS=haiku
+      VAR_OS_TYPE=unix
+      ;;
     *)
       as_fn_error $? "unsupported operating system $build_os" "$LINENO" 5
       ;;
@@ -15875,6 +15880,10 @@ $as_echo "$OPENJDK_BUILD_OS-$OPENJDK_BUILD_CPU" >&6; }
       ;;
     *aix*)
       VAR_OS=aix
+      VAR_OS_TYPE=unix
+      ;;
+    *haiku*)
+      VAR_OS=haiku
       VAR_OS_TYPE=unix
       ;;
     *)
@@ -16069,6 +16078,9 @@ $as_echo "$COMPILE_TYPE" >&6; }
   if test "x$OPENJDK_TARGET_OS" = "xaix"; then
     RELEASE_FILE_OS_NAME="AIX"
   fi
+  if test "x$OPENJDK_TARGET_OS" = "xhaiku"; then
+    RELEASE_FILE_OS_NAME="Haiku"
+  fi
   RELEASE_FILE_OS_ARCH=${OPENJDK_TARGET_CPU}
 
 
@@ -16131,6 +16143,8 @@ $as_echo "$COMPILE_TYPE" >&6; }
 
   if test "x$OPENJDK_TARGET_OS" = xmacosx; then
       OPENJDK_TARGET_OS_EXPORT_DIR=macosx
+  elif test "x$OPENJDK_TARGET_OS" = xhaiku; then
+      OPENJDK_TARGET_OS_EXPORT_DIR=haiku
   else
       OPENJDK_TARGET_OS_EXPORT_DIR=${OPENJDK_TARGET_OS_TYPE}
   fi
@@ -16283,6 +16297,8 @@ $as_echo "$COMPILE_TYPE" >&6; }
 
   if test "x$OPENJDK_BUILD_OS" = xmacosx; then
       OPENJDK_BUILD_OS_EXPORT_DIR=macosx
+  elif test "x$OPENJDK_BUILD_OS" = xhaiku; then
+      OPENJDK_BUILD_OS_EXPORT_DIR=haiku
   else
       OPENJDK_BUILD_OS_EXPORT_DIR=${OPENJDK_BUILD_OS_TYPE}
   fi
@@ -24670,6 +24686,9 @@ fi
     INCLUDE_SA=false
   fi
   if test "x$OPENJDK_TARGET_OS" = xaix ; then
+    INCLUDE_SA=false
+  fi
+  if test "x$OPENJDK_TARGET_OS" = "xhaiku"; then
     INCLUDE_SA=false
   fi
 
@@ -44092,7 +44111,7 @@ $as_echo "$as_me: Rewriting NM to \"$new_complete\"" >&6;}
 
   # objcopy is used for moving debug symbols to separate files when
   # full debug symbols are enabled.
-  if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux; then
+  if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux || test "x$OPENJDK_TARGET_OS" = xhaiku; then
 
 
   # Publish this variable in the help.
@@ -52055,6 +52074,9 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_TARGET_OS" = xbsd; then
     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
+  elif test "x$OPENJDK_TARGET_OS" = xhaiku; then
+    COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DHAIKU"
+    JVM_CFLAGS="$JVM_CFLAGS -DHAIKU"
   elif test "x$OPENJDK_TARGET_OS" = xwindows; then
     JVM_CFLAGS="$JVM_CFLAGS -D_WINDOWS -DWIN32 -D_JNI_IMPLEMENTATION_"
     JVM_CFLAGS="$JVM_CFLAGS -nologo -W3 -MD -MP"
@@ -52343,6 +52365,18 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
           ;;
         esac
     fi
+    if test "x$OPENJDK_TARGET_OS" = xhaiku; then
+      # And since we now know that the linker is gnu, then add -z defs, to forbid
+      # undefined symbols in object files.
+      LDFLAGS_NO_UNDEF_SYM="-Wl,-z,defs"
+      LDFLAGS_JDK="${LDFLAGS_JDK} $LDFLAGS_NO_UNDEF_SYM"
+      JVM_LDFLAGS="$JVM_LDFLAGS  $LDFLAGS_NO_UNDEF_SYM"
+      LDFLAGS_NO_EXEC_STACK="-Wl,-z,noexecstack"
+      JVM_LDFLAGS="$JVM_LDFLAGS $LDFLAGS_NO_EXEC_STACK"
+      if test "x$OPENJDK_TARGET_CPU" = xx86; then
+        JVM_LDFLAGS="$JVM_LDFLAGS -march=i586"
+      fi
+    fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
     LDFLAGS_JDK="$LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
@@ -52433,6 +52467,8 @@ LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${JAVA_BASE_LDFLAGS}"
     JVM_LIBS="$JVM_LIBS -Wl,-lC_r -lm -ldl -lpthread"
   elif test "x$OPENJDK_TARGET_OS" = xbsd; then
     JVM_LIBS="$JVM_LIBS -lm"
+  elif test "x$OPENJDK_TARGET_OS" = xhaiku; then
+    JVM_LIBS="$JVM_LIBS -lnetwork"
   elif test "x$OPENJDK_TARGET_OS" = xwindows; then
     JVM_LIBS="$JVM_LIBS kernel32.lib user32.lib gdi32.lib winspool.lib \
         comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
@@ -52873,6 +52909,9 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
         -qlanglvl=noredefmac -qnortti -qnoeh -qignerrno"
   elif test "x$OPENJDK_BUILD_OS" = xbsd; then
     OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -D_ALLBSD_SOURCE"
+  elif test "x$OPENJDK_BUILD_OS" = xhaiku; then
+    OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK="$OPENJDK_BUILD_COMMON_CCXXFLAGS_JDK -DHAIKU"
+    OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -DHAIKU"
   elif test "x$OPENJDK_BUILD_OS" = xwindows; then
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -D_WINDOWS -DWIN32 -D_JNI_IMPLEMENTATION_"
     OPENJDK_BUILD_JVM_CFLAGS="$OPENJDK_BUILD_JVM_CFLAGS -nologo -W3 -MD -MP"
@@ -53161,6 +53200,18 @@ $as_echo "$as_me: GCC >= 6 detected; adding ${NO_DELETE_NULL_POINTER_CHECKS_CFLA
           ;;
         esac
     fi
+    if test "x$OPENJDK_BUILD_OS" = xhaiku; then
+      # And since we now know that the linker is gnu, then add -z defs, to forbid
+      # undefined symbols in object files.
+      LDFLAGS_NO_UNDEF_SYM="-Wl,-z,defs"
+      OPENJDK_BUILD_LDFLAGS_JDK="${OPENJDK_BUILD_LDFLAGS_JDK} $LDFLAGS_NO_UNDEF_SYM"
+      OPENJDK_BUILD_JVM_LDFLAGS="$OPENJDK_BUILD_JVM_LDFLAGS  $LDFLAGS_NO_UNDEF_SYM"
+      LDFLAGS_NO_EXEC_STACK="-Wl,-z,noexecstack"
+      OPENJDK_BUILD_JVM_LDFLAGS="$OPENJDK_BUILD_JVM_LDFLAGS $LDFLAGS_NO_EXEC_STACK"
+      if test "x$OPENJDK_BUILD_CPU" = xx86; then
+        OPENJDK_BUILD_JVM_LDFLAGS="$OPENJDK_BUILD_JVM_LDFLAGS -march=i586"
+      fi
+    fi
   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
     LDFLAGS_SOLSTUDIO="-Wl,-z,defs"
     OPENJDK_BUILD_LDFLAGS_JDK="$OPENJDK_BUILD_LDFLAGS_JDK $LDFLAGS_SOLSTUDIO -ztext"
@@ -53251,6 +53302,8 @@ OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${OPENJDK_BUILD_JA
     OPENJDK_BUILD_JVM_LIBS="$OPENJDK_BUILD_JVM_LIBS -Wl,-lC_r -lm -ldl -lpthread"
   elif test "x$OPENJDK_BUILD_OS" = xbsd; then
     OPENJDK_BUILD_JVM_LIBS="$OPENJDK_BUILD_JVM_LIBS -lm"
+  elif test "x$OPENJDK_BUILD_OS" = xhaiku; then
+    OPENJDK_BUILD_JVM_LIBS="$OPENJDK_BUILD_JVM_LIBS -lnetwork"
   elif test "x$OPENJDK_BUILD_OS" = xwindows; then
     OPENJDK_BUILD_JVM_LIBS="$OPENJDK_BUILD_JVM_LIBS kernel32.lib user32.lib gdi32.lib winspool.lib \
         comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib \
@@ -54638,8 +54691,9 @@ $as_echo "yes" >&6; }
 
 
   # Check if X11 is needed
-  if test "x$OPENJDK_TARGET_OS" = xwindows || test "x$OPENJDK_TARGET_OS" = xmacosx; then
-    # No X11 support on windows or macosx
+  if test "x$OPENJDK_TARGET_OS" = xwindows || test "x$OPENJDK_TARGET_OS" = xmacosx \
+	|| test "x$OPENJDK_TARGET_OS" = xhaiku; then
+    # No X11 support on windows or macosx or haiku
     NEEDS_LIB_X11=false
   else
     # All other instances need X11, even if building headless only, libawt still
@@ -54648,8 +54702,8 @@ $as_echo "yes" >&6; }
   fi
 
   # Check if cups is needed
-  if test "x$OPENJDK_TARGET_OS" = xwindows; then
-    # Windows have a separate print system
+  if test "x$OPENJDK_TARGET_OS" = xwindows || test "x$OPENJDK_TARGET_OS" = xhaiku; then
+    # Windows and Haiku have a separate print system
     NEEDS_LIB_CUPS=false
   else
     NEEDS_LIB_CUPS=true
@@ -66749,6 +66803,9 @@ $as_echo_n "checking for number of cores... " >&6; }
   elif test "x$OPENJDK_BUILD_OS" = xaix ; then
     NUM_CORES=`/usr/sbin/prtconf | grep "^Number Of Processors" | awk '{ print $4 }'`
     FOUND_CORES=yes
+  elif test "x$OPENJDK_BUILD_OS" = xhaiku; then
+    NUM_CORES=`sysinfo -cpu | grep "CPU" | wc -l`
+    FOUND_CORES=yes
   elif test -n "$NUMBER_OF_PROCESSORS"; then
     # On windows, look in the env
     NUM_CORES=$NUMBER_OF_PROCESSORS
@@ -66804,6 +66861,10 @@ $as_echo_n "checking for memory size... " >&6; }
   elif test "x$OPENJDK_BUILD_OS" = xwindows; then
     # Windows, but without cygwin
     MEMORY_SIZE=`wmic computersystem get totalphysicalmemory -value | grep = | cut -d "=" -f 2-`
+    MEMORY_SIZE=`expr $MEMORY_SIZE / 1024 / 1024`
+    FOUND_MEM=yes
+  elif test "x$OPENJDK_BUILD_OS" = xhaiku; then
+    MEMORY_SIZE=`sysinfo -mem | grep max | awk '{print int($7)}'`
     MEMORY_SIZE=`expr $MEMORY_SIZE / 1024 / 1024`
     FOUND_MEM=yes
   fi
